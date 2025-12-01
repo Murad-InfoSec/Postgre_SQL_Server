@@ -1,0 +1,33 @@
+[Unit]
+Description=PostgreSQL Container Service
+After=docker.service network-online.target
+Wants=docker.service network-online.target
+
+[Service]
+Type=simple
+User=postgress
+Restart=always
+TimeoutStartSec=0
+
+# ENV vars only used on FIRST initialization
+Environment=POSTGRES_PASSWORD=12345
+Environment=POSTGRES_USER=db_user
+Environment=POSTGRES_DB=mydb
+
+# Clean old container if it exists (ignore errors if it doesn't)
+ExecStartPre=-/usr/bin/docker stop postgress_container
+ExecStartPre=-/usr/bin/docker rm postgress_container
+
+ExecStart=/usr/bin/docker run \
+  --name postgress_container \
+  -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
+  -e POSTGRES_USER=${POSTGRES_USER} \
+  -e POSTGRES_DB=${POSTGRES_DB} \
+  -v /postgress_service/data:/var/lib/postgresql/data:Z \
+  -p 5432:5432 \
+  postgres:16
+
+ExecStop=/usr/bin/docker stop postgress_container
+
+[Install]
+WantedBy=multi-user.target
